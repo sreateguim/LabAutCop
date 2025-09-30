@@ -1,0 +1,59 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: test-results.xml
+          if-no-files-found: ignore
+
+  deploy:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && success()
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build app
+        run: npm run build
+
+      - name: Deploy app
+        run: |
+          echo "Desplegando la aplicación..."
+          # Agrega aquí tu comando de despliegue (por ejemplo, npm run deploy o un script personalizado)
